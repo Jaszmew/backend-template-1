@@ -1,13 +1,29 @@
 ### Get all users
 GET http://localhost:3001/user
 
+### Get user based on part of email
+GET http://localhost:3001/user?emailContains=test
+Content-Type: application/json
+
+### Get a single user
+GET http://localhost:3001/user/57a3cf2d-7925-430e-897a-c9e792bcdf0c
+
 ### Create a user
 POST  http://localhost:3001/user/
 Content-Type: application/json
 
 {
-  "firstName": "first",
+  "firstName": "second",
   "lastName": "account",
-  "email": "test@kumoso.fi",
+  "email": "nothing@kumoso.fi",
   "password": "Password1"
+}
+
+### Update user data
+PUT http://localhost:3001/user/update?id=57a3cf2d-7925-430e-897a-c9e792bcdf0c
+Content-Type: application/json
+
+{
+  "oldPassword": "Password1",
+  "firstName": "New name"
 }

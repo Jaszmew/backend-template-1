@@ -12,8 +12,6 @@ report.[0-9]*.[0-9]*.[0-9]*.[0-9]*.json
 
 # JWT keys
 certs/
-.key
-.key.pub
 
 # Runtime data
 pids

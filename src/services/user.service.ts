@@ -3,15 +3,28 @@ import bcrypt from "bcryptjs"
 import { client } from "@/db/prisma"
 import { RequestError } from "@/utils/errors"
 // import { emailUtils } from "../../utils/email"
-import { userUtils } from "@/utils/user.utils"
+import { ChangePassword, UserQueryParams, userUtils } from "@/utils/user.utils"
 import { StatusCodes } from "http-status-codes"
 
-// Get all users
-const getAll = async () => {
-  return await client.user.findMany()
+// Functions as a get all users when used without params
+const getUsersBasedOnParams = async (params: UserQueryParams) => {
+  const whereConditions: Prisma.AccountWhereInput = {}
+
+  if (params.emailContains) {
+    whereConditions.email = {
+      contains: params.emailContains,
+      mode: "insensitive",
+    }
+  }
+
+  const users = await client.account.findMany({
+    where: whereConditions,
+    select: userUtils.accountSelectInput,
+  })
+
+  return users
 }
 
-// Can be returned to the client
 const getUser = async (unique: Prisma.AccountWhereUniqueInput) => {
   const user = await client.account.findUnique({
     where: unique,
@@ -22,13 +35,6 @@ const getUser = async (unique: Prisma.AccountWhereUniqueInput) => {
     throw new RequestError(StatusCodes.NOT_FOUND, "User not found!")
   }
   return user
-}
-
-const getMultipleUsers = async (input: Prisma.UserWhereInput) => {
-  return await client.user.findMany({
-    where: input,
-    select: userUtils.accountSelectInput,
-  })
 }
 
 const create = async (
@@ -70,13 +76,34 @@ const create = async (
 
 const update = async (
   unique: Prisma.AccountWhereUniqueInput,
-  input: Prisma.AccountUpdateInput,
+  input: ChangePassword,
   userData: Prisma.UserUpdateInput
 ) => {
   const user = await client.account.findUniqueOrThrow({ where: unique })
-  if (typeof input.password === "string") {
+
+  if (
+    typeof input.newPassword === "string" &&
+    typeof input.oldPassword === "string"
+  ) {
+    if (!input.oldPassword) {
+      throw new RequestError(
+        StatusCodes.BAD_REQUEST,
+        "Current password missing"
+      )
+    }
+
+    // Compare old password input to current password before changes
+    const isOldPasswordCorrect = await bcrypt.compare(
+      input.oldPassword,
+      user.password
+    )
+    if (!isOldPasswordCorrect) {
+      throw new RequestError(StatusCodes.BAD_REQUEST, "Incorrect password")
+    }
+
+    // Compare new password to existing in case they are the same
     const passwordMatchesOld = await bcrypt.compare(
-      input.password,
+      input.newPassword,
       user.password
     )
     if (passwordMatchesOld) {
@@ -85,13 +112,13 @@ const update = async (
         "New password cannot be the same as your old password."
       )
     }
-    input.password = await bcrypt.hash(input.password, 10)
+    input.newPassword = await bcrypt.hash(input.newPassword, 10)
   }
 
   await client.account.update({
     where: unique,
     data: {
-      ...input,
+      password: input.newPassword,
       user: {
         update: userData,
       },
@@ -194,9 +221,8 @@ const resetPassword = async (token: string, newPassword: string) => {
 }
 
 export const userService = {
-  getAll,
+  getUsersBasedOnParams,
   getUser,
-  getMultipleUsers,
   create,
   update,
   confirmUserEmail,

@@ -33,6 +33,15 @@ const getUserByIdValidator = z.object({
   }),
 })
 
+const getUsersBasedOnParamsValidator = z.object({
+  params: z
+    .object({
+      emailContains: z.string().min(3).optional(),
+      // Add other rules
+    })
+    .strict(),
+})
+
 const createUserValidator = z.object({
   body: z.object({
     firstName,
@@ -50,6 +59,9 @@ const updateUserValidator = z.object({
   body: z.object({
     firstName: firstName.optional(),
     lastName: lastName.optional(),
+    oldPassword: z.string(),
+    newPassword: password.optional(),
+    timezone: z.string().optional(),
   }),
 })
 
@@ -75,6 +87,7 @@ const resetPasswordValidator = z.object({
 
 export const userValidator = {
   getUserByIdValidator,
+  getUsersBasedOnParamsValidator,
   createUserValidator,
   updateUserValidator,
   confirmUserEmailValidator,

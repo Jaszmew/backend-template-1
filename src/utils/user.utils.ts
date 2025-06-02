@@ -27,6 +27,21 @@ const accountResponseMap = (account: PrismaAccountPayload) => {
   }
 }
 
+export type ChangePassword = {
+  newPassword: string | undefined
+  oldPassword: string | undefined
+}
+
+export interface UserQueryParams {
+  /* 
+  Add params here
+  privilege?: Privilege
+  available: Available 
+  etc
+  */
+  emailContains?: string
+}
+
 export const userUtils = {
   accountSelectInput,
 

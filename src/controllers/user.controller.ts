@@ -78,9 +78,19 @@ const updateAccount = async (req: Request, res: Response) => {
   res.sendStatus(StatusCodes.OK)
 }
 
+const deleteUserById = async (req: Request, res: Response) => {
+  const { userId } = req.params as z.infer<
+    typeof userValidator.getUserByIdValidator
+  >["params"]
+
+  await userService.removeUser({ id: userId })
+  res.sendStatus(StatusCodes.NO_CONTENT)
+}
+
 export const userController = {
   getUsersBasedOnParams,
   getUser,
   createAccount,
   updateAccount,
+  deleteUserById,
 }

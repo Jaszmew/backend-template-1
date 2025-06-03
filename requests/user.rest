@@ -13,9 +13,9 @@ POST  http://localhost:3001/user/
 Content-Type: application/json
 
 {
-  "firstName": "second",
+  "firstName": "first",
   "lastName": "account",
-  "email": "nothing@kumoso.fi",
+  "email": "test@kumoso.fi",
   "password": "Password1"
 }
 
@@ -27,3 +27,6 @@ Content-Type: application/json
   "oldPassword": "Password1",
   "firstName": "New name"
 }
+
+### Delete user
+DELETE http://localhost:3001/user/5d787286-108a-43d7-ac0d-a21e640b9890

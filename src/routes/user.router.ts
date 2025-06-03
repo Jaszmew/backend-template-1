@@ -37,3 +37,10 @@ userRouter.put(
   validator(userValidator.updateUserValidator),
   userController.updateAccount
 )
+
+userRouter.delete(
+  "/:userId",
+  // authMiddleware.verifyOrThrow,
+  validator(userValidator.getUserByIdValidator),
+  userController.deleteUserById
+)

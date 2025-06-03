@@ -92,7 +92,7 @@ const update = async (
       )
     }
 
-    // Compare old password input to current password before changes
+    // Force current password entry to update user data
     const isOldPasswordCorrect = await bcrypt.compare(
       input.oldPassword,
       user.password

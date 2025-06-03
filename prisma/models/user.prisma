@@ -47,7 +47,7 @@ model AccountConfirmationToken {
   type AccountConfirmationType
 
   accountId String
-  account   Account @relation(fields: [accountId], references: [id])
+  account   Account @relation(fields: [accountId], references: [id], onDelete: Cascade)
 
   @@map("user_confirmation_tokens")
 }

@@ -37,6 +37,16 @@ CREATE TABLE "calendars" (
 );
 
 -- CreateTable
+CREATE TABLE "color_tags" (
+    "id" TEXT NOT NULL,
+    "name" TEXT NOT NULL,
+    "color" TEXT NOT NULL,
+    "userId" TEXT NOT NULL,
+
+    CONSTRAINT "color_tags_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
 CREATE TABLE "events" (
     "id" TEXT NOT NULL,
     "title" TEXT NOT NULL,
@@ -57,16 +67,6 @@ CREATE TABLE "events" (
     "colorTagId" TEXT,
 
     CONSTRAINT "events_pkey" PRIMARY KEY ("id")
-);
-
--- CreateTable
-CREATE TABLE "color_tags" (
-    "id" TEXT NOT NULL,
-    "name" TEXT NOT NULL,
-    "color" TEXT NOT NULL,
-    "userId" TEXT NOT NULL,
-
-    CONSTRAINT "color_tags_pkey" PRIMARY KEY ("id")
 );
 
 -- CreateTable
@@ -158,10 +158,10 @@ CREATE TABLE "user_confirmation_tokens" (
 );
 
 -- CreateIndex
-CREATE UNIQUE INDEX "events_recurrenceRuleId_key" ON "events"("recurrenceRuleId");
+CREATE UNIQUE INDEX "color_tags_userId_name_key" ON "color_tags"("userId", "name");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "color_tags_userId_name_key" ON "color_tags"("userId", "name");
+CREATE UNIQUE INDEX "events_recurrenceRuleId_key" ON "events"("recurrenceRuleId");
 
 -- CreateIndex
 CREATE UNIQUE INDEX "attendees_eventId_userId_key" ON "attendees"("eventId", "userId");
@@ -173,13 +173,16 @@ CREATE UNIQUE INDEX "accounts_email_key" ON "accounts"("email");
 CREATE UNIQUE INDEX "accounts_userId_key" ON "accounts"("userId");
 
 -- AddForeignKey
-ALTER TABLE "calendars" ADD CONSTRAINT "calendars_userId_fkey" FOREIGN KEY ("userId") REFERENCES "users"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+ALTER TABLE "calendars" ADD CONSTRAINT "calendars_userId_fkey" FOREIGN KEY ("userId") REFERENCES "users"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "color_tags" ADD CONSTRAINT "color_tags_userId_fkey" FOREIGN KEY ("userId") REFERENCES "users"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "events" ADD CONSTRAINT "events_calendarId_fkey" FOREIGN KEY ("calendarId") REFERENCES "calendars"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "events" ADD CONSTRAINT "events_ownerId_fkey" FOREIGN KEY ("ownerId") REFERENCES "users"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+ALTER TABLE "events" ADD CONSTRAINT "events_ownerId_fkey" FOREIGN KEY ("ownerId") REFERENCES "users"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "events" ADD CONSTRAINT "events_recurrenceRuleId_fkey" FOREIGN KEY ("recurrenceRuleId") REFERENCES "recurrence_rules"("id") ON DELETE SET NULL ON UPDATE CASCADE;
@@ -189,9 +192,6 @@ ALTER TABLE "events" ADD CONSTRAINT "events_originalEventId_fkey" FOREIGN KEY ("
 
 -- AddForeignKey
 ALTER TABLE "events" ADD CONSTRAINT "events_colorTagId_fkey" FOREIGN KEY ("colorTagId") REFERENCES "color_tags"("id") ON DELETE SET NULL ON UPDATE CASCADE;
-
--- AddForeignKey
-ALTER TABLE "color_tags" ADD CONSTRAINT "color_tags_userId_fkey" FOREIGN KEY ("userId") REFERENCES "users"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "attendees" ADD CONSTRAINT "attendees_eventId_fkey" FOREIGN KEY ("eventId") REFERENCES "events"("id") ON DELETE CASCADE ON UPDATE CASCADE;
@@ -209,4 +209,4 @@ ALTER TABLE "attachments" ADD CONSTRAINT "attachments_eventId_fkey" FOREIGN KEY 
 ALTER TABLE "accounts" ADD CONSTRAINT "accounts_userId_fkey" FOREIGN KEY ("userId") REFERENCES "users"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "user_confirmation_tokens" ADD CONSTRAINT "user_confirmation_tokens_accountId_fkey" FOREIGN KEY ("accountId") REFERENCES "accounts"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+ALTER TABLE "user_confirmation_tokens" ADD CONSTRAINT "user_confirmation_tokens_accountId_fkey" FOREIGN KEY ("accountId") REFERENCES "accounts"("id") ON DELETE CASCADE ON UPDATE CASCADE;

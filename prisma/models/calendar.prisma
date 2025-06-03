@@ -10,9 +10,24 @@ model Calendar {
 
   // Relations
   userId String
-  user   User   @relation(fields: [userId], references: [id])
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   events Event[]
 
   @@map("calendars")
+}
+
+model ColorTag {
+  id    String @id @default(uuid())
+  name  String
+  color String
+
+  // Relations
+  Event Event[]
+
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, name])
+  @@map("color_tags")
 }

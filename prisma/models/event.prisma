@@ -19,7 +19,7 @@ model Event {
   calendar   Calendar @relation(fields: [calendarId], references: [id])
 
   ownerId String
-  owner   User   @relation("EventOwner", fields: [ownerId], references: [id])
+  owner   User   @relation("EventOwner", fields: [ownerId], references: [id], onDelete: Cascade)
 
   // Optional for recurring events
   recurrenceRuleId String?         @unique
@@ -39,21 +39,6 @@ model Event {
   attachments Attachment[]
 
   @@map("events")
-}
-
-model ColorTag {
-  id    String @id @default(uuid())
-  name  String
-  color String
-
-  // Relations
-  Event Event[]
-
-  userId String
-  user   User   @relation(fields: [userId], references: [id])
-
-  @@unique([userId, name])
-  @@map("color_tags")
 }
 
 model Attendee {

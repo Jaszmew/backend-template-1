@@ -1,8 +1,8 @@
-import { validator } from "@/middleware/validator"
-import express from "express"
-import { userValidator } from "@/validators/user.validator"
 import { userController } from "@/controllers/user.controller"
 import { authMiddleware } from "@/middleware/auth"
+import { validator } from "@/middleware/validator"
+import { userValidator } from "@/validators/user.validator"
+import express from "express"
 
 export const userRouter = express.Router()
 
@@ -25,7 +25,6 @@ userRouter.get(
 // Create a user account
 userRouter.post(
   "/",
-  // authMiddleware.verifyOrThrow,
   validator(userValidator.createUserValidator),
   userController.createAccount
 )
@@ -33,14 +32,14 @@ userRouter.post(
 // Update user data
 userRouter.put(
   "/update",
-  // authMiddleware.verifyOrThrow,
+  authMiddleware.verifyOrThrow,
   validator(userValidator.updateUserValidator),
   userController.updateAccount
 )
 
 userRouter.delete(
   "/:userId",
-  // authMiddleware.verifyOrThrow,
+  authMiddleware.verifyOrThrow,
   validator(userValidator.getUserByIdValidator),
   userController.deleteUserById
 )

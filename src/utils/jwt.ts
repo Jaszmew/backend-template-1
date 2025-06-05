@@ -28,7 +28,7 @@ export const JWT_ACCESS_TOKEN_PUBLIC_KEY = fs.readFileSync(
 
 // Interfaces
 export interface JwtTokenPayload extends JwtPayload {
-  userId: string
+  accountId: string
   privilege: Privilege
 }
 

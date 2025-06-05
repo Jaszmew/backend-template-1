@@ -33,6 +33,7 @@ model Account {
   user                     User?                      @relation(fields: [userId], references: [id], onDelete: Cascade)
   privilege                Privilege                  @default(USER)
   AccountConfirmationToken AccountConfirmationToken[]
+  RefreshToken             RefreshToken[]
 
   @@map("accounts")
 }

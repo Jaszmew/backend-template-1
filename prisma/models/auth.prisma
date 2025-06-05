@@ -1,0 +1,11 @@
+model RefreshToken {
+  token String @id @default(uuid())
+
+  accountId String
+  account   Account @relation(fields: [accountId], references: [id])
+
+  createdAt DateTime @default(now())
+  expiresAt DateTime
+
+  @@map("refresh-tokens")
+}

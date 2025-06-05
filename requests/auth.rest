@@ -1,0 +1,14 @@
+### Heartbeat
+GET http://localhost:3001/auth/heartbeat
+
+### Login
+POST http://localhost:3001/auth/login
+Content-Type: application/json
+
+{
+  "email": "test@kumoso.fi",
+  "password": "Password1"
+}
+
+### Logout
+DELETE http://localhost:3001/auth/logout

@@ -23,6 +23,16 @@ CREATE TYPE "AccountConfirmationType" AS ENUM ('FORGOT_PASSWORD', 'EMAIL_CONFIRM
 CREATE TYPE "Privilege" AS ENUM ('ADMIN', 'USER', 'SUPERADMIN');
 
 -- CreateTable
+CREATE TABLE "refresh-tokens" (
+    "token" TEXT NOT NULL,
+    "accountId" TEXT NOT NULL,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "expiresAt" TIMESTAMP(3) NOT NULL,
+
+    CONSTRAINT "refresh-tokens_pkey" PRIMARY KEY ("token")
+);
+
+-- CreateTable
 CREATE TABLE "calendars" (
     "id" TEXT NOT NULL,
     "name" TEXT NOT NULL,
@@ -171,6 +181,9 @@ CREATE UNIQUE INDEX "accounts_email_key" ON "accounts"("email");
 
 -- CreateIndex
 CREATE UNIQUE INDEX "accounts_userId_key" ON "accounts"("userId");
+
+-- AddForeignKey
+ALTER TABLE "refresh-tokens" ADD CONSTRAINT "refresh-tokens_accountId_fkey" FOREIGN KEY ("accountId") REFERENCES "accounts"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "calendars" ADD CONSTRAINT "calendars_userId_fkey" FOREIGN KEY ("userId") REFERENCES "users"("id") ON DELETE CASCADE ON UPDATE CASCADE;

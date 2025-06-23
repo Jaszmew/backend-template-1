@@ -9,7 +9,7 @@ export const userRouter = express.Router()
 // Get all users or search users based on params
 userRouter.get(
   "/",
-  // authMiddleware.verifyOrThrow,
+  authMiddleware.verifyOrThrow,
   validator(userValidator.getUsersBasedOnParamsValidator),
   userController.getUsersBasedOnParams
 )
@@ -17,7 +17,7 @@ userRouter.get(
 // Get user by ID
 userRouter.get(
   "/:userId",
-  // authMiddleware.verifyOrThrow,
+  authMiddleware.verifyOrThrow,
   validator(userValidator.getUserByIdValidator),
   userController.getUser
 )

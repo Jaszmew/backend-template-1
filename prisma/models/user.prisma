@@ -7,11 +7,17 @@ model User {
   updatedAt DateTime @updatedAt
 
   // Relations
-  account       Account?
-  ownedColorTag ColorTag[]
-  calendars     Calendar[]
-  attendees     Attendee[]
-  eventsOwned   Event[]    @relation("EventOwner")
+  account                 Account?
+  ownedColorTag           ColorTag[]
+  calendars               Calendar[]
+  calendarMemberships     CalendarMember[]
+  eventsOwned             Event[]                  @relation("EventOwner")
+  attending               EventGuest[]
+  userCalendarPreferences UserCalendarPreference[]
+  userEventPreferences    UserEventPreference[]
+
+  primaryCalendarId String?   @unique
+  primaryCalendar   Calendar? @relation("PrimaryUserCalendar", fields: [primaryCalendarId], references: [id])
 
   @@map("users")
 }

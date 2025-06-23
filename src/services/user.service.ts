@@ -6,7 +6,7 @@ import { RequestError } from "@/utils/errors"
 import { ChangePassword, UserQueryParams, userUtils } from "@/utils/user.utils"
 import { StatusCodes } from "http-status-codes"
 
-// Functions as a get all users when used without params
+// Find all users based on params
 const getUsersBasedOnParams = async (params: UserQueryParams) => {
   const whereConditions: Prisma.AccountWhereInput = {}
 

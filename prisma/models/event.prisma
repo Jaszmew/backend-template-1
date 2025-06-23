@@ -1,19 +1,23 @@
 model Event {
-  id          String          @id @default(uuid())
+  id          String   @id @default(uuid())
   title       String
   description String?
   startTime   DateTime
   endTime     DateTime
   isAllDay    Boolean
   location    String?
-  status      EventStatus     @default(UNDECIDED)
-  visibility  EventVisibility @default(PUBLIC)
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
   // Relations
-  category EventType
+  status          EventStatus           @default(UNDECIDED)
+  visibility      Visibility            @default(CALENDAR_DEFAULT) // Who the event is visible to
+  category        EventType
+  guests          EventGuest[]
+  reminders       Reminder[]
+  attachments     Attachment[]
+  userPreferences UserEventPreference[]
 
   calendarId String
   calendar   Calendar @relation(fields: [calendarId], references: [id])
@@ -34,52 +38,74 @@ model Event {
   colorTagId String?
   colorTag   ColorTag? @relation(fields: [colorTagId], references: [id])
 
-  attendees   Attendee[]
-  reminders   Reminder[]
-  attachments Attachment[]
-
   @@map("events")
 }
 
-model Attendee {
-  id             String         @id @default(uuid())
-  eventId        String
-  userId         String
-  responseStatus AttendeeStatus @default(NEEDSACTION)
-  isOrganizer    Boolean        @default(false)
-  isOptional     Boolean        @default(false)
+// Model for saving preferred colors
+model ColorTag {
+  id       String @id @default(uuid())
+  name     String
+  hexColor String @default("#eda100")
 
-  event Event @relation(fields: [eventId], references: [id], onDelete: Cascade)
-  user  User  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  // Relations
+  event                Event[]
+  userEventPreferences UserEventPreference[]
 
-  @@unique([eventId, userId])
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, name])
+  @@map("color_tags")
+}
+
+model EventGuest {
+  id          String  @id @default(uuid())
+  email       String // For external guests
+  isOrganizer Boolean @default(false)
+  isOptional  Boolean @default(false)
+
+  // Relations
+  responseStatus AttendeeStatus @default(PENDING)
+
+  eventId String
+  event   Event  @relation(fields: [eventId], references: [id], onDelete: Cascade)
+
+  userId String?
+  user   User?   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([eventId, email])
   @@map("attendees")
 }
 
+// Event recurrence settings
 model RecurrenceRule {
-  id         String         @id @default(uuid())
-  frequency  RecurrenceFreq
-  interval   Int            @default(1) // Every "interval" days/weeks/months/years (Default: 1 day, 1 week, etc.)
-  count      Int?
-  until      DateTime // Date until recurrence happens
-  byDat      String? // Comma-separated list ("MO, TU, WE")
-  byMonth    String? // Comma-separated list ("1, 5, 12")
-  byMonthDat String? // Comma-separated list (1, 15, 30)
-  weekStart  String         @default("MO")
-  timezone   String         @default("EEST")
+  id          String   @id @default(uuid())
+  interval    Int      @default(1) // Every "interval" days/weeks/months/years (Default: 1 day, 1 week, etc.)
+  count       Int?
+  until       DateTime // Date until recurrence happens
+  byDay       String? // Comma-separated list ("MO, TU, WE")
+  byMonth     String? // Comma-separated list ("1, 5, 12")
+  byMonthDate String? // Comma-separated list ("1, 15, 30")
+  timezone    String   @default("EEST")
 
-  event Event?
+  // Relations
+  event     Event?
+  weekStart WeekStart      @default(MONDAY)
+  frequency RecurrenceFreq
 
   @@map("recurrence_rules")
 }
 
+// Event reminder timer
 model Reminder {
-  id            String         @id @default(uuid())
-  eventId       String
-  method        ReminderMethod @default(EMAIL)
+  id            String @id @default(uuid())
   minutesBefore Int // Reminder time in minutes before start time
 
-  event Event @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  // Relations
+  method ReminderMethod @default(EMAIL)
+
+  eventId String
+  event   Event  @relation(fields: [eventId], references: [id], onDelete: Cascade)
 
   @@map("reminders")
 }
@@ -93,10 +119,30 @@ model Attachment {
 
   createdAt DateTime @default(now())
 
+  // Relations
   eventId String
   event   Event  @relation(fields: [eventId], references: [id], onDelete: Cascade)
 
   @@map("attachments")
+}
+
+// Save user preferences for a specific event
+model UserEventPreference {
+  id          String  @id @default(uuid())
+  customColor String? // User color preference for this event
+
+  // Relations
+  userId String
+  user   User   @relation(fields: [userId], references: [id])
+
+  eventId String
+  event   Event  @relation(fields: [eventId], references: [id], onDelete: Cascade)
+
+  colorTagId String?
+  colorTag   ColorTag? @relation(fields: [colorTagId], references: [id])
+
+  @@unique([userId, eventId])
+  @@map("user_event_preferences")
 }
 
 enum EventType {
@@ -109,20 +155,20 @@ enum EventType {
 
 enum EventStatus {
   CONFIRMED
-  CANCELED
+  CANCELLED
   UNDECIDED
 }
 
-enum EventVisibility {
+enum Visibility {
   PUBLIC
   PRIVATE
+  CALENDAR_DEFAULT
 }
 
 enum AttendeeStatus {
   ACCEPTED
   DECLINED
-  UNDECIDED
-  NEEDSACTION
+  PENDING
 }
 
 enum RecurrenceFreq {
@@ -135,4 +181,9 @@ enum RecurrenceFreq {
 enum ReminderMethod {
   POPUP
   EMAIL
+}
+
+enum WeekStart {
+  MONDAY
+  SUNDAY
 }

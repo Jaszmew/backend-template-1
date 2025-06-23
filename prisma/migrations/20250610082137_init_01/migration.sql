@@ -1,20 +1,26 @@
 -- CreateEnum
+CREATE TYPE "CalendarRole" AS ENUM ('OWNER', 'EDITOR', 'VIEWER');
+
+-- CreateEnum
 CREATE TYPE "EventType" AS ENUM ('EVENT', 'MEETING', 'CONFERENCE', 'VACATION', 'UNAVAILABLE');
 
 -- CreateEnum
 CREATE TYPE "EventStatus" AS ENUM ('CONFIRMED', 'CANCELED', 'UNDECIDED');
 
 -- CreateEnum
-CREATE TYPE "EventVisibility" AS ENUM ('PUBLIC', 'PRIVATE');
+CREATE TYPE "EventVisibility" AS ENUM ('PUBLIC', 'PRIVATE', 'CALENDAR_DEFAULT');
 
 -- CreateEnum
-CREATE TYPE "AttendeeStatus" AS ENUM ('ACCEPTED', 'DECLINED', 'UNDECIDED', 'NEEDSACTION');
+CREATE TYPE "AttendeeStatus" AS ENUM ('ACCEPTED', 'DECLINED', 'PENDING');
 
 -- CreateEnum
 CREATE TYPE "RecurrenceFreq" AS ENUM ('DAILY', 'WEEKLY', 'MONTHLY', 'YEARLY');
 
 -- CreateEnum
 CREATE TYPE "ReminderMethod" AS ENUM ('POPUP', 'EMAIL');
+
+-- CreateEnum
+CREATE TYPE "WeekStart" AS ENUM ('MONDAY', 'SUNDAY');
 
 -- CreateEnum
 CREATE TYPE "AccountConfirmationType" AS ENUM ('FORGOT_PASSWORD', 'EMAIL_CONFIRMATION');
@@ -37,23 +43,22 @@ CREATE TABLE "calendars" (
     "id" TEXT NOT NULL,
     "name" TEXT NOT NULL,
     "description" TEXT,
-    "color" TEXT NOT NULL DEFAULT '#FF8400',
-    "isDefault" BOOLEAN NOT NULL DEFAULT false,
+    "color" TEXT NOT NULL DEFAULT '#fffbf7',
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMP(3) NOT NULL,
-    "userId" TEXT NOT NULL,
+    "ownerId" TEXT NOT NULL,
 
     CONSTRAINT "calendars_pkey" PRIMARY KEY ("id")
 );
 
 -- CreateTable
-CREATE TABLE "color_tags" (
+CREATE TABLE "CalendarMember" (
     "id" TEXT NOT NULL,
-    "name" TEXT NOT NULL,
-    "color" TEXT NOT NULL,
     "userId" TEXT NOT NULL,
+    "calendarId" TEXT NOT NULL,
+    "role" "CalendarRole" NOT NULL DEFAULT 'VIEWER',
 
-    CONSTRAINT "color_tags_pkey" PRIMARY KEY ("id")
+    CONSTRAINT "CalendarMember_pkey" PRIMARY KEY ("id")
 );
 
 -- CreateTable
@@ -65,10 +70,10 @@ CREATE TABLE "events" (
     "endTime" TIMESTAMP(3) NOT NULL,
     "isAllDay" BOOLEAN NOT NULL,
     "location" TEXT,
-    "status" "EventStatus" NOT NULL DEFAULT 'UNDECIDED',
-    "visibility" "EventVisibility" NOT NULL DEFAULT 'PUBLIC',
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMP(3) NOT NULL,
+    "status" "EventStatus" NOT NULL DEFAULT 'UNDECIDED',
+    "visibility" "EventVisibility" NOT NULL DEFAULT 'PUBLIC',
     "category" "EventType" NOT NULL,
     "calendarId" TEXT NOT NULL,
     "ownerId" TEXT NOT NULL,
@@ -80,13 +85,24 @@ CREATE TABLE "events" (
 );
 
 -- CreateTable
+CREATE TABLE "color_tags" (
+    "id" TEXT NOT NULL,
+    "name" TEXT NOT NULL,
+    "color" TEXT NOT NULL DEFAULT '#eda100',
+    "userId" TEXT NOT NULL,
+
+    CONSTRAINT "color_tags_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
 CREATE TABLE "attendees" (
     "id" TEXT NOT NULL,
-    "eventId" TEXT NOT NULL,
-    "userId" TEXT NOT NULL,
-    "responseStatus" "AttendeeStatus" NOT NULL DEFAULT 'NEEDSACTION',
+    "email" TEXT NOT NULL,
+    "responseStatus" "AttendeeStatus" NOT NULL DEFAULT 'PENDING',
     "isOrganizer" BOOLEAN NOT NULL DEFAULT false,
     "isOptional" BOOLEAN NOT NULL DEFAULT false,
+    "eventId" TEXT NOT NULL,
+    "userId" TEXT,
 
     CONSTRAINT "attendees_pkey" PRIMARY KEY ("id")
 );
@@ -101,7 +117,7 @@ CREATE TABLE "recurrence_rules" (
     "byDat" TEXT,
     "byMonth" TEXT,
     "byMonthDat" TEXT,
-    "weekStart" TEXT NOT NULL DEFAULT 'MO',
+    "weekStart" "WeekStart" NOT NULL DEFAULT 'MONDAY',
     "timezone" TEXT NOT NULL DEFAULT 'EEST',
 
     CONSTRAINT "recurrence_rules_pkey" PRIMARY KEY ("id")
@@ -137,6 +153,7 @@ CREATE TABLE "users" (
     "lastName" TEXT NOT NULL,
     "timeZone" TEXT NOT NULL DEFAULT 'EEST',
     "updatedAt" TIMESTAMP(3) NOT NULL,
+    "primaryCalendarId" TEXT,
 
     CONSTRAINT "users_pkey" PRIMARY KEY ("id")
 );
@@ -168,13 +185,19 @@ CREATE TABLE "user_confirmation_tokens" (
 );
 
 -- CreateIndex
-CREATE UNIQUE INDEX "color_tags_userId_name_key" ON "color_tags"("userId", "name");
+CREATE UNIQUE INDEX "CalendarMember_userId_calendarId_key" ON "CalendarMember"("userId", "calendarId");
 
 -- CreateIndex
 CREATE UNIQUE INDEX "events_recurrenceRuleId_key" ON "events"("recurrenceRuleId");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "attendees_eventId_userId_key" ON "attendees"("eventId", "userId");
+CREATE UNIQUE INDEX "color_tags_userId_name_key" ON "color_tags"("userId", "name");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "attendees_eventId_email_key" ON "attendees"("eventId", "email");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "users_primaryCalendarId_key" ON "users"("primaryCalendarId");
 
 -- CreateIndex
 CREATE UNIQUE INDEX "accounts_email_key" ON "accounts"("email");
@@ -186,10 +209,13 @@ CREATE UNIQUE INDEX "accounts_userId_key" ON "accounts"("userId");
 ALTER TABLE "refresh-tokens" ADD CONSTRAINT "refresh-tokens_accountId_fkey" FOREIGN KEY ("accountId") REFERENCES "accounts"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "calendars" ADD CONSTRAINT "calendars_userId_fkey" FOREIGN KEY ("userId") REFERENCES "users"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE "calendars" ADD CONSTRAINT "calendars_ownerId_fkey" FOREIGN KEY ("ownerId") REFERENCES "users"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "color_tags" ADD CONSTRAINT "color_tags_userId_fkey" FOREIGN KEY ("userId") REFERENCES "users"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE "CalendarMember" ADD CONSTRAINT "CalendarMember_userId_fkey" FOREIGN KEY ("userId") REFERENCES "users"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "CalendarMember" ADD CONSTRAINT "CalendarMember_calendarId_fkey" FOREIGN KEY ("calendarId") REFERENCES "calendars"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "events" ADD CONSTRAINT "events_calendarId_fkey" FOREIGN KEY ("calendarId") REFERENCES "calendars"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
@@ -207,6 +233,9 @@ ALTER TABLE "events" ADD CONSTRAINT "events_originalEventId_fkey" FOREIGN KEY ("
 ALTER TABLE "events" ADD CONSTRAINT "events_colorTagId_fkey" FOREIGN KEY ("colorTagId") REFERENCES "color_tags"("id") ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
+ALTER TABLE "color_tags" ADD CONSTRAINT "color_tags_userId_fkey" FOREIGN KEY ("userId") REFERENCES "users"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
 ALTER TABLE "attendees" ADD CONSTRAINT "attendees_eventId_fkey" FOREIGN KEY ("eventId") REFERENCES "events"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
@@ -217,6 +246,9 @@ ALTER TABLE "reminders" ADD CONSTRAINT "reminders_eventId_fkey" FOREIGN KEY ("ev
 
 -- AddForeignKey
 ALTER TABLE "attachments" ADD CONSTRAINT "attachments_eventId_fkey" FOREIGN KEY ("eventId") REFERENCES "events"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "users" ADD CONSTRAINT "users_primaryCalendarId_fkey" FOREIGN KEY ("primaryCalendarId") REFERENCES "calendars"("id") ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "accounts" ADD CONSTRAINT "accounts_userId_fkey" FOREIGN KEY ("userId") REFERENCES "users"("id") ON DELETE CASCADE ON UPDATE CASCADE;

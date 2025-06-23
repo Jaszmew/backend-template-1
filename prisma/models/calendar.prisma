@@ -2,32 +2,58 @@ model Calendar {
   id          String  @id @default(uuid())
   name        String
   description String?
-  color       String  @default("#FF8400")
-  isDefault   Boolean @default(false)
+  color       String  @default("#fffbf7")
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
   // Relations
-  userId String
-  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  ownerId String
+  owner   User   @relation(fields: [ownerId], references: [id], onDelete: Cascade)
 
-  events Event[]
+  visibility     Visibility               @default(PUBLIC) // Is the calendar visible to others
+  members        CalendarMember[] // Members of this calendar (includes owner)
+  events         Event[] // Events that belong to this calendar
+  primaryForUser User?                    @relation("PrimaryUserCalendar") // Sets a calendar as primary for user
+  userPreference UserCalendarPreference[]
 
   @@map("calendars")
 }
 
-model ColorTag {
-  id    String @id @default(uuid())
-  name  String
-  color String
+// Defines a user's role on a specific calendar & limits same calendar instances to one
+model CalendarMember {
+  id String @id @default(uuid())
 
   // Relations
-  Event Event[]
-
   userId String
-  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user   User   @relation(fields: [userId], references: [id])
 
-  @@unique([userId, name])
-  @@map("color_tags")
+  calendarId String
+  calendar   Calendar @relation(fields: [calendarId], references: [id], onDelete: Cascade)
+
+  role CalendarRole @default(VIEWER)
+
+  @@unique([userId, calendarId])
+}
+
+// Sets user's preferred color for specific calendar
+model UserCalendarPreference {
+  id          String  @id @default(uuid())
+  customColor String?
+
+  // Relations
+  userId String
+  user   User   @relation(fields: [userId], references: [id])
+
+  calendarId String
+  calendar   Calendar @relation(fields: [calendarId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, calendarId])
+  @@map("user_calendar_preferences")
+}
+
+enum CalendarRole {
+  OWNER // Full control
+  EDITOR // Can create/delete/edit events, cannot modify members or delete calendar
+  VIEWER // Can view events, but not modify anything except event and calendar colors
 }

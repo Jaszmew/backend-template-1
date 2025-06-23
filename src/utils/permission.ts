@@ -1,5 +1,7 @@
 import { Privilege } from "@prisma/client"
 
+// The following is outdated and has been moved to Auth0
+
 type PermissionMap = {
   [key in Privilege]: Privilege[]
 }

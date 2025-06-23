@@ -1,11 +1,8 @@
-import dotenv from "dotenv"
 import app from "@/app"
 import { client } from "@/db/prisma"
+import dotenv from "dotenv"
 
 dotenv.config()
-
-// Routes
-// apiRouter.use("/route", userRouter)
 
 const PORT = process.env.PORT || 3001
 app.listen(PORT, () => {

@@ -141,4 +141,4 @@ dist
 .pnp.*
 
 # Private key
-.pem
+*.pem
